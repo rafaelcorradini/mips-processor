@@ -3,6 +3,8 @@
 #include <string.h>
 #include <math.h>
 
+#define ZERO "000000000000000000000000000000000000"
+
 //Memory of 64 word (256 bytes) as global variable
 unsigned char MEM[64][32];
 
@@ -72,9 +74,18 @@ unsigned char AuxAluOut[32];
 int old=0;
 int next=0;
 
+int convertCharToInt(unsigned char *binaryArray, int lenght){
+    int result = 0;
+    for (int i = (lenght-1); i >= 0; --i){
+        if(binaryArray[i] == '1')
+            result += pow(2, (lenght-1)-i);
+    }
+    return result;
+}
 
-void unity_control(int op){
+void unit_control(unsigned char opcode[6]){
 
+   int op = convertCharToInt(opcode, 6);
    int i=3, n;
     int b[4];
 
@@ -109,6 +120,7 @@ void unity_control(int op){
     }
 
 
+
 PCWrite=!b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*!b[2]*b[3];
 PCWriteCond=b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3];
 IorD=!b[0]*!b[1]*b[2]*b[3]+!b[0]*b[1]*!b[2]*b[3];
@@ -132,23 +144,16 @@ MemtoReg[1]=0;
 return;
 }
 
-void PC_func(unsigned char muxPC [32]){
+void PC_func(unsigned char mxPC [32]){
 	int i;
 	if(PcIn == '1'){
 		for(i = 0; i < 32; i++){
-			PC[i] = muxPC[i];
+			PC[i] = mxPC[i];
 		}
 	}
 }
 
-int convertCharToInt(unsigned char *binaryArray, int lenght){
-    int result = 0;
-    for (int i = (lenght-1); i >= 0; --i){
-        if(binaryArray[i] == '1')
-            result += pow(2, (lenght-1)-i);
-    }
-    return result;
-}
+
 
 void memory(unsigned char adress[32], unsigned char data[32], unsigned char read, unsigned char write)
 {
@@ -199,12 +204,12 @@ void registers(unsigned char ReadRegister1[5], unsigned char ReadRegister2[5], u
 	}
 }
 
-unsigned char *mux(
-    unsigned char *control,
+unsigned char *mux2(
     unsigned char *input0,
     unsigned char *input1,
     unsigned char *input2,
-    unsigned char *input3
+    unsigned char *input3,
+    unsigned char *control
 ) {
     if(control[0] == '0') {
         if(control[1] == '0')
@@ -216,6 +221,20 @@ unsigned char *mux(
             return input1;
         else
             return input3;
+    }
+}
+
+unsigned char *mux(
+    unsigned char *input0,
+    unsigned char *input1,
+    unsigned char control
+) {
+    if(control == '0') {
+        return input0;
+        
+    } 
+    else {
+        return input1;
     }
 }
 
@@ -454,9 +473,46 @@ void clockUpper()
 	}	
 }
 
+unsigned char *split(int init, int end, unsigned char *vetor)
+{
+	unsigned char *array;
+	array = malloc(sizeof(unsigned char) * (end - init + 1));
+	for (int i = init, j = 0; i <= end; ++i, j++)
+	{
+		array[j] = array[i];
+	}
+	return array;
+}
+
 int main()
 {
-	
+	//Init 
+	for (int i = 0; i < 32; ++i)
+	{
+		InstructionRegister[i] = MEM[0][i];
+	}
+
+	while(1)
+	{
+		//Unit control 
+		unit_control(split(26,31,InstructionRegister));
+		//Memory block funcion
+		memory(mux(PC, AluOut, IorD), B, MemRead, MemWrite);
+		//Registers Bank Function
+		registers(split(21,25,InstructionRegister), split(16,20,InstructionRegister), mux2(split(16,20,InstructionRegister),
+				  split(11,15, InstructionRegister), decToBinary(31), NULL, RegDst), mux2(AluOut, MemoryDataRegister, PC, NULL, MemtoReg), RegWrite);
+		//Alu function
+		ALU(mux(A, PC, ALUSrcA), mux(B, decToBinary(4), signalExtend(split(0, 15, InstructionRegister), 
+			shiftLeft(signalExtend(split(0, 15, InstructionRegister))), ALUSrcB)), aluControl(ALUOp, split(0,5, InstructionRegister)));
+		//PC function
+		PC()		
+
+
+
+
+		clockUpper();
+	}
+
 	return 0;
 }
 
