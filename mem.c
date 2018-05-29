@@ -20,31 +20,15 @@ unsigned char A[32];
 //32 Bit B Register
 unsigned char B[32];
 
-
-int convertAdress(unsigned char adress[32])
-{
-	int result = 0;
-	for (int i = 31; i >= 0; --i)
-	{
-		if(adress[i] == '1')
-		{
-			result += pow(2, 31-i);
-		}
-	}
-	return result;
+int convertCharToInt(unsigned char *binaryArray, int lenght){
+    int result = 0;
+    for (int i = (lenght-1); i >= 0; --i){
+        if(binaryArray[i] == '1')
+            result += pow(2, (lenght-1)-i);
+    }
+    //printf("%d\n", result);
+    return result;
 }
-
-int convertRegister(unsigned char registers[5])
-{
-	int result;
-	for (int i = 4; i >= 0; --i)
-	{
-		if(registers[i] == '1')
-			result += pow(2, 4-i);
-	}
-	return result;
-}
-
 
 void memory(unsigned char adress[32], unsigned char data[32], unsigned char read, unsigned char write)
 {
@@ -52,7 +36,7 @@ void memory(unsigned char adress[32], unsigned char data[32], unsigned char read
 	if(read == '1')	
 	{
 		//Copy memory data to return_array
-		int adr = convertAdress(adress);
+		int adr = convertCharToInt(adress, 32);
 		for(int i = 0; i < 32; i++)
 		{
 			InstructionRegister[i] = MEM[adr][i];
@@ -63,7 +47,7 @@ void memory(unsigned char adress[32], unsigned char data[32], unsigned char read
 	else if(write == '1')
 	{
 		//Copy memory data to return_array
-		int adr = convertAdress(adress);
+		int adr = convertCharToInt(adress, 32);
 		for(int i = 0; i < 32; i++)
 		{
 			MEM[adr][i] = data[i];
@@ -76,7 +60,7 @@ void registers(unsigned char ReadRegister1[5], unsigned char ReadRegister2[5], u
 	//To write WriteData content at register of number WriteRegister
 	if(RegWrite == '1')
 	{
-		int reg_num = convertRegister(WriteRegister);
+		int reg_num = convertCharToInt(WriteRegister, 5);
 		for (int i = 0; i < 32; ++i)
 		{
 			REG[reg_num][i] = WriteData[i];
@@ -85,8 +69,8 @@ void registers(unsigned char ReadRegister1[5], unsigned char ReadRegister2[5], u
 	//To read both ReadRegister 1 and ReadRegister 2 number registers and copy the contents to registers A and B respectively  
 	else
 	{
-		int reg_num1 = convertRegister(ReadRegister1);
-		int reg_num2 = convertRegister(ReadRegister2);
+		int reg_num1 = convertCharToInt(ReadRegister1, 5);
+		int reg_num2 = convertCharToInt(ReadRegister2, 5);
 		for (int i = 0; i < 32; ++i)
 		{
 			A[i] = REG[reg_num1][i];
@@ -100,7 +84,7 @@ int main()
 	unsigned char $num[32] = {0};
 	$num[30] = '1';
 
-		printf("%d\n", convertAdress($num));
+	printf("%d\n", convertCharToInt($num, 32));
 	
 
 	return 0;
