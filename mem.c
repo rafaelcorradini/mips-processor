@@ -20,6 +20,7 @@ unsigned char A[32];
 //32 Bit B Register
 unsigned char B[32];
 
+
 int convertCharToInt(unsigned char *binaryArray, int lenght){
     int result = 0;
     for (int i = (lenght-1); i >= 0; --i){
@@ -39,7 +40,10 @@ void memory(unsigned char adress[32], unsigned char data[32], unsigned char read
 		int adr = convertCharToInt(adress, 32);
 		for(int i = 0; i < 32; i++)
 		{
-			InstructionRegister[i] = MEM[adr][i];
+			if(irWrite == 1)
+			{
+				InstructionRegister[i] = MEM[adr][i];
+			}
 			MemoryDataRegister[i] =  MEM[adr][i];
 		}
 	}
@@ -67,15 +71,12 @@ void registers(unsigned char ReadRegister1[5], unsigned char ReadRegister2[5], u
 		}
 	}
 	//To read both ReadRegister 1 and ReadRegister 2 number registers and copy the contents to registers A and B respectively  
-	else
+	int reg_num1 = convertCharToInt(ReadRegister1, 5);
+	int reg_num2 = convertCharToInt(ReadRegister2, 5);
+	for (int i = 0; i < 32; ++i)
 	{
-		int reg_num1 = convertCharToInt(ReadRegister1, 5);
-		int reg_num2 = convertCharToInt(ReadRegister2, 5);
-		for (int i = 0; i < 32; ++i)
-		{
-			A[i] = REG[reg_num1][i];
-			B[i] = REG[reg_num2][i];	
-		}
+		A[i] = REG[reg_num1][i];
+		B[i] = REG[reg_num2][i];	
 	}
 }
 
