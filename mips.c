@@ -79,6 +79,7 @@ int next=0;
 
 int convertCharToInt(unsigned char *binaryArray, int lenght){
     int result = 0;
+
     for (int i = (lenght-1); i >= 0; --i){
         if(binaryArray[i] == 1)
             result += pow(2, (lenght-1)-i);
@@ -190,14 +191,15 @@ void registers(unsigned char ReadRegister1[5], unsigned char ReadRegister2[5], u
 {
 	//To write WriteData content at register of number WriteRegister
 	if(RegWrite == 1)
-	{
+	{   
 		int reg_num = convertCharToInt(WriteRegister, 5);
 		for (int i = 0; i < 32; ++i)
 		{
 			AuxREG[reg_num][i] = WriteData[i];
 		}
 	}
-	//To read both ReadRegister 1 and ReadRegister 2 number registers and copy the contents to registers A and B respectively  
+	//To read both ReadRegister 1 and ReadRegister 2 number registers and copy the contents to registers A and B respectively
+      
 	int reg_num1 = convertCharToInt(ReadRegister1, 5);
 	int reg_num2 = convertCharToInt(ReadRegister2, 5);
 	for (int i = 0; i < 32; ++i)
@@ -218,10 +220,10 @@ unsigned char *mux2(
         if(control[1] == 0)
             return input0;
         else
-            return input2;
+            return input1;
     } else {
         if(control[1] == 0)
-            return input1;
+            return input2;
         else
             return input3;
     }
@@ -255,15 +257,14 @@ unsigned char *shiftLeft(unsigned char *input) {
 }
 
 unsigned char *signalExtend(unsigned char *input) {
-    int i;
     unsigned char *result = malloc(sizeof(unsigned char) * 32);
     
-    for (i = 31; i >= 16; i--) {
-        result[i] = input[i];
-    } 
-    for (i = 15; i >= 0; i--) {
-        result[i] = input[16];
+    for (int i = 0, j = 16; i < 16; i++, j++) {
+        result[j] = input[i];
     }
+    for (int j = 0; j < 16; j++) {
+        result[j] = input[0];
+    } 
 
     return result;
 }
@@ -403,7 +404,7 @@ void printInput(unsigned char *input, int size) {
     int i;
 
     for (i = 0; i < size; i++) {
-        printf("%c", input[i]);
+        printf("%d", input[i]);
     }
     printf("\n");
 }
@@ -412,6 +413,11 @@ void ALU(unsigned char *aluControlInput, unsigned char *dataOne, unsigned char *
     int operandOne = convertCharToInt(dataOne, 32);
     int operandTwo = convertCharToInt(dataTwo, 32);
     unsigned char *result;
+
+    // printf("\n");
+    // printInput(dataOne, 32);
+    // printInput(dataTwo, 32);
+    // printf("\n");
     
     if (checkALUoperation(aluControlInput) == 0){
         result = decToBinary(operandOne + operandTwo);
@@ -536,12 +542,12 @@ int main()
 	{
 		unsigned char *splited = split(0,5,InstructionRegister);
 
-		printf("HEY\n");
-		for (int i = 0; i < 32; ++i)
-		{
-			printf("%hhu", InstructionRegister[i]);
-		}
-		printf("\n");
+		// printf("HEY\n");
+		// for (int i = 0; i < 32; ++i)
+		// {
+		// 	printf("%hhu", InstructionRegister[i]);
+		// }
+		// printf("\n");
 		
 		
 		//Unit control 
