@@ -480,9 +480,9 @@ unsigned char *split(int init, int end, unsigned char *vetor)
 {
 	unsigned char *array;
 	array = malloc(sizeof(unsigned char) * (end - init + 1));
-	for (int i = init, j = 0; i <= end; ++i, j++)
+	for (int i = init, j = 0; i <= end; ++i, ++j)
 	{
-		array[j] = array[i];
+		array[j] = vetor[i];
 	}
 	return array;
 }
@@ -495,7 +495,7 @@ unsigned char Pc_In(unsigned char write, unsigned char cond, unsigned char *b_n_
 
 int main()
 {
-	
+
 	unsigned char **op;
 
 	op = (unsigned char **)malloc(sizeof(unsigned char*) * 64);
@@ -506,10 +506,10 @@ int main()
 
 	for (int i = 0; i < 32; ++i)
 	{
-		op[0][i] = decToBinary(201326610)[i];
-		op[1][i] = decToBinary(537395210)[i];
-		op[2][i] = decToBinary(537460737)[i];
-		op[3][i] = decToBinary(537526274)[i];
+		op[0][i] = decToBinary(537395210)[i];
+		op[1][i] = decToBinary(537460737)[i];
+		op[2][i] = decToBinary(537526274)[i];
+		op[3][i] = decToBinary(201326610)[i];
 		op[4][i] = decToBinary(277348355)[i];
 		op[5][i] = decToBinary(8986656)[i];
 		op[6][i] = decToBinary(13185058)[i];
@@ -526,24 +526,39 @@ int main()
 			MEM[i][j] = op[i][j];
 		}
 	}
-	
-	for (int i = 0; i < 5; ++i)
+	for (int i = 0; i < 32; ++i)
 	{
-		printf("%d\n", convertCharToInt(AuxPC,32));
+		InstructionRegister[i] = MEM[0][i];
+	}
+	
+
+	for (int i = 0; i < 32 ; ++i)
+	{
+		unsigned char *splited = split(0,5,InstructionRegister);
+
+		printf("HEY\n");
+		for (int i = 0; i < 32; ++i)
+		{
+			printf("%hhu", InstructionRegister[i]);
+		}
+		printf("\n");
+		
+		
 		//Unit control 
-		unit_control(split(26,31,InstructionRegister));
+		unit_control(split(0,5,InstructionRegister));
 		//Memory block funcion
 		memory(mux(PC, AluOut, IorD), B, MemRead, MemWrite);
 		//Registers Bank Function
-		registers(split(21,25,InstructionRegister), split(16,20,InstructionRegister), mux2(split(16,20,InstructionRegister),
-				  split(11,15, InstructionRegister), decToBinary(31), NULL, RegDst), mux2(AluOut, MemoryDataRegister, PC, NULL, MemtoReg), RegWrite);
+		registers(split(6,10,InstructionRegister), split(11,15,InstructionRegister), mux2(split(11,15,InstructionRegister),
+				  split(16,20, InstructionRegister), decToBinary(31), NULL, RegDst), mux2(AluOut, MemoryDataRegister, PC, NULL, MemtoReg), RegWrite);
 		//Alu function
-		ALU(mux(A, PC, ALUSrcA), mux2(B, decToBinary(1), signalExtend(split(0, 15, InstructionRegister)),shiftLeft(signalExtend(split(0, 15, InstructionRegister))), ALUSrcB), aluControl(ALUOp, split(0,5, InstructionRegister)));
+		ALU(mux(A, PC, ALUSrcA), mux2(B, decToBinary(1), signalExtend(split(16, 31, InstructionRegister)),shiftLeft(signalExtend(split(16, 31, InstructionRegister))), ALUSrcB), aluControl(ALUOp, split(26,31, InstructionRegister)));
 		//PC function
-		PC_func(mux2(AuxAluOut, AluOut, shiftLeft(split(0,25,InstructionRegister)), A, PCSource), Pc_In(PCWrite, PCWriteCond, mux(Z,O,BNE)));
+		PC_func(mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister)), A, PCSource), Pc_In(PCWrite, PCWriteCond, mux(Z,O,BNE)));
 		//Pass aux values to registers at upper clock border
 		clockUpper();
 	}
+
 	printf("REGISTRADORES\n");
 	for (int i = 0; i < 32; ++i)
 	{
@@ -553,6 +568,7 @@ int main()
 		}
 		printf("\n");
 	}
+
 	printf("MEMORIA:\n");
 	for (int i = 0; i < 64; ++i)
 	{
