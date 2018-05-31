@@ -558,7 +558,7 @@ int main()
 		registers(split(6,10,InstructionRegister), split(11,15,InstructionRegister), mux2(split(11,15,InstructionRegister),
 				  split(16,20, InstructionRegister), decToBinary(31), NULL, RegDst), mux2(AluOut, MemoryDataRegister, PC, NULL, MemtoReg), RegWrite);
 		//Alu function
-		ALU(mux(A, PC, ALUSrcA), mux2(B, decToBinary(1), signalExtend(split(16, 31, InstructionRegister)),shiftLeft(signalExtend(split(16, 31, InstructionRegister))), ALUSrcB), aluControl(ALUOp, split(26,31, InstructionRegister)));
+		ALU(mux(A, PC, ALUSrcA), mux2(B, decToBinary(1), signalExtend(split(16, 31, InstructionRegister)),shiftLeft(signalExtend(split(16, 31, InstructionRegister))), ALUSrcB), signalExtend(aluControl(ALUOp, split(26,31, InstructionRegister))));
 		//PC function
 		PC_func(mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister)), A, PCSource), Pc_In(PCWrite, PCWriteCond, mux(Z,O,BNE)));
 		//Pass aux values to registers at upper clock border
