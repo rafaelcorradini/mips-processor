@@ -547,11 +547,11 @@ int main()
 	}
 	
 
-	for (int i = 0; i < 32 ; ++i)
+	for (int o = 0; o < 32 ; ++o)
 	{
 		unsigned char *splited = split(0,5,InstructionRegister);
 
-<<<<<<< HEAD
+
 		printf("IR: ");
 		for (int i = 0; i < 32; ++i)
 		{
@@ -559,21 +559,39 @@ int main()
 		}
 		printf("\n");
 
-		printf("OPCODE: ");
+		/*printf("OPCODE: ");
 		for (int i = 0; i < 6; ++i)
 		{
 			printf("%hhu", splited[i]);
 		}
+		printf("\n");*/
+
+		printf("PC: ");
+		for (int i = 0; i < 32; ++i)
+		{
+			printf("%hhu", PC[i]);
+		}
 		printf("\n");
-=======
-		// printf("HEY\n");
-		// for (int i = 0; i < 32; ++i)
-		// {
-		// 	printf("%hhu", InstructionRegister[i]);
-		// }
-		// printf("\n");
+
+		printf("PC WRITE: ");
+			printf("%hhu\n", PCWrite);
+
+		printf("PC SOURCE: ");
+			printf("%hhu%hhu\n", PCSource[0], PCSource[1]);	
+
+		printf("PC MUST WRITE: ");
+		for (int i = 0; i < 32; ++i)
+		{
+			{
+				printf("%hhu",AuxAluOut[i]);
+			}
+		}
 		
->>>>>>> 388870dee1623af4ca0a3ec4086894665b5d5d60
+		/*printf("PC SOURCE: ");
+			printf("%hhu%hhu\n", PCSource[0], PCSource[1]);*/
+
+		printf("\n\n");
+		
 		
 		//Unit control 
 		unit_control(split(0,5,InstructionRegister));
@@ -583,14 +601,14 @@ int main()
 		registers(split(6,10,InstructionRegister), split(11,15,InstructionRegister), mux2(split(11,15,InstructionRegister),
 				  split(16,20, InstructionRegister), decToBinary(31), NULL, RegDst), mux2(AluOut, MemoryDataRegister, PC, NULL, MemtoReg), RegWrite);
 		//Alu function
-		ALU(mux(A, PC, ALUSrcA), mux2(B, decToBinary(1), signalExtend(split(16, 31, InstructionRegister)),shiftLeft(signalExtend(split(16, 31, InstructionRegister))), ALUSrcB), signalExtend(aluControl(ALUOp, split(26,31, InstructionRegister))));
+		ALU(aluControl(ALUOp, split(26,31, InstructionRegister)), mux(A, PC, ALUSrcA), mux2(B, decToBinary(1), signalExtend(split(16, 31, InstructionRegister)), shiftLeft(signalExtend(split(16, 31, InstructionRegister))), ALUSrcB));
 		//PC function
 		PC_func(mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister)), A, PCSource), Pc_In(PCWrite, PCWriteCond, mux(Z,O,BNE)));
 		//Pass aux values to registers at upper clock border
 		clockUpper();
 	}
 
-	printf("REGISTRADORES\n");
+	/*printf("REGISTRADORES\n");
 	for (int i = 0; i < 32; ++i)
 	{
 		for (int j = 0; j < 32; ++j)
@@ -609,7 +627,7 @@ int main()
 		}
 		printf("\n");
 	}
-
+	*/
 	return 0;
 }
 
