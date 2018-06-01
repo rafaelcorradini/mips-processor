@@ -89,60 +89,68 @@ int convertCharToInt(unsigned char *binaryArray, int lenght){
 void unit_control(unsigned char opcode[6]){
 
    int op = convertCharToInt(opcode, 6);
-   int i=3, n;
     int b[4];
 
-    next =
-        (!(old) +
-        2*!((old^0x1)+((op^0x23)*(op^0x2b))) +
-        3*!((old^0x2)+(op^0x23)) +
-        4*!(old^0x3) +
-        5*!((old^0x2)+(op^0x2b)) +
-        6*!((old^0x1)+!!(op)) +
-        7*!(old^0x6) +
-        8*!((old^0x1)+(op^0x4)) +
-        9*!((old^0x1)+(op^0x2)) +
-        10*!((old^0x1)+(op^0x5)) +
-        11*!((old^0x1)+(op^0x8)) +
-        12*!((old^0x1)+(op^0xc)) +
-        13*!((old^0x1)+(op^0x14)) +
-        14*!((old^0x1)+(op^0x3)) +
-        15*!((old^0x1)+(op^0x15)));
+    	//b3 = less significative bit
+        b[3]=(!(old)+!((old^0x2)+(op^0x23))+
+        !((old^0x2)+(op^0x2b))+
+        !(old^0x6)+!((old^0x1)+(op^0x2))+
+        !((old^0x1)+(op^0x8))+
+        !(((old^0x1)+(op^0x14))*((old^0x15)+(op^0x15)))+
+        !((old^0x1)+(op^0x15)));
 
-    old=next;
-    n=next;
+        b[2]=!((old^0x1)+((op^0x23)*(op^0x2b))) +
+        !((old^0x2)+(op^0x23)) +
+        !((old^0x1)+!!(op)) +
+        !(old^0x6) +
+        !((old^0x1)+(op^0x5)) +
+        !((old^0x1)+(op^0x8)) +
+        !((old^0x1)+(op^0x3)) +
+        !((old^0x1)+(op^0x15));
 
-    for(int j=0;j<4;j++){
-        b[j]=0;
-    }
+        b[1]= !(old^0x3) +
+        !((old^0x2)+(op^0x2b)) +
+        !((old^0x1)+!!(op)) +
+        !(old^0x6) +
+        !((old^0x1)+(op^0xc)) +
+        !(((old^0x1)+(op^0x14))*((old^0x15)+(op^0x15))) +
+        !((old^0x1)+(op^0x3)) +
+        !((old^0x1)+(op^0x15));
 
-    while (n > 0) {
-        b[i] = n % 2;
-        n = n / 2;
-        i--;
-    }
+        b[0]= !((old^0x1)+(op^0x4)) +
+        !((old^0x1)+(op^0x2)) +
+        !((old^0x1)+(op^0x5)) +
+        !((old^0x1)+(op^0x8)) +
+        !((old^0x1)+(op^0xc)) +
+        !(((old^0x1)+(op^0x14))*((old^0x15)+(op^0x15))) +
+        !((old^0x1)+(op^0x3)) +
+        !((old^0x1)+(op^0x15));
 
 
 
-PCWrite=!b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*!b[2]*b[3];
-PCWriteCond=b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3];
-IorD=!b[0]*!b[1]*b[2]*b[3]+!b[0]*b[1]*!b[2]*b[3];
-MemRead=!b[0]*!b[1]*!b[2]*!b[3]+!b[0]*!b[1]*b[2]*b[3];
-MemWrite=!b[0]*b[1]*!b[2]*b[3];
-Irwrite=!b[0]*!b[1]*!b[2]*!b[3];
-MemtoReg[0]=!b[0]*b[1]*!b[2]*!b[3];
-PCSource[1]=b[0]*!b[1]*!b[2]*b[3];
-PCSource[0]=b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3]+b[0]*b[1]*!b[2]*b[3];
-ALUOp[1]=!b[0]*b[1]*b[2]*!b[3];
-ALUOp[0]=b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3];
-ALUSrcB[1]=!b[0]*!b[1]*b[2]*!b[3];
-ALUSrcB[0]=!b[0]*!b[1]*!b[2]*!b[3]+!b[0]*!b[1]*!b[2]*b[3];
-ALUSrcA=!b[0]*!b[1]*b[2]*!b[3]+!b[0]*b[1]*b[2]*!b[3]+b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3];
-RegWrite=!b[0]*b[1]*!b[2]*!b[3]+!b[0]*b[1]*b[2]*b[3];
-RegDst[0]=!b[0]*b[1]*b[2]*b[3];
-RegDst[1]=b[0]*b[1]*b[2]*!b[3];
-BNE=b[0]*!b[1]*b[2]*!b[3];
-MemtoReg[1]=0;
+        old=8*b[0]+4*b[1]+2*b[2]+1*b[3];
+
+
+
+		PCWrite=!b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*!b[2]*b[3];
+        PCWriteCond=b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3];
+        IorD=!b[0]*!b[1]*b[2]*b[3]+!b[0]*b[1]*!b[2]*b[3];
+        MemRead=!b[0]*!b[1]*!b[2]*!b[3]+!b[0]*!b[1]*b[2]*b[3];
+        MemWrite=!b[0]*b[1]*!b[2]*b[3];
+        Irwrite=!b[0]*!b[1]*!b[2]*!b[3];
+        MemtoReg[0]=!b[0]*b[1]*!b[2]*!b[3];
+        PCSource[1]=b[0]*!b[1]*!b[2]*b[3];
+        PCSource[0]=b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3]+b[0]*b[1]*!b[2]*b[3];
+        ALUOp[1]=!b[0]*b[1]*b[2]*!b[3];
+        ALUOp[0]=b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3];
+        ALUSrcB[1]=!b[0]*!b[1]*b[2]*!b[3];
+        ALUSrcB[0]=!b[0]*!b[1]*!b[2]*!b[3]+!b[0]*!b[1]*!b[2]*b[3]+!b[0]*!b[1]*!b[2]*!b[3];
+        ALUSrcA=!b[0]*!b[1]*b[2]*!b[3]+!b[0]*b[1]*b[2]*!b[3]+b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3];
+        RegWrite=!b[0]*b[1]*!b[2]*!b[3]+!b[0]*b[1]*b[2]*b[3]+!b[0]*!b[1]*!b[2]*!b[3]+!b[0]*!b[1]*!b[2]*!b[3];
+        RegDst[0]=!b[0]*b[1]*b[2]*b[3];
+        RegDst[1]=b[0]*b[1]*b[2]*!b[3];
+        BNE=b[0]*!b[1]*b[2]*!b[3];
+        MemtoReg[1]=0;
 
 return;
 }
@@ -506,10 +514,10 @@ int main()
 
 	for (int i = 0; i < 32; ++i)
 	{
-		op[0][i] = decToBinary(537395210)[i];
-		op[1][i] = decToBinary(537460737)[i];
-		op[2][i] = decToBinary(537526274)[i];
-		op[3][i] = decToBinary(201326610)[i];
+		op[0][i] = decToBinary(201326610)[i];
+		op[1][i] = decToBinary(537395210)[i];
+		op[2][i] = decToBinary(537460737)[i];
+		op[3][i] = decToBinary(537526274)[i];
 		op[4][i] = decToBinary(277348355)[i];
 		op[5][i] = decToBinary(8986656)[i];
 		op[6][i] = decToBinary(13185058)[i];
@@ -529,6 +537,7 @@ int main()
 	for (int i = 0; i < 32; ++i)
 	{
 		InstructionRegister[i] = MEM[0][i];
+		AuxInstructionRegister[i] = MEM[0][i];
 	}
 	
 
@@ -536,13 +545,19 @@ int main()
 	{
 		unsigned char *splited = split(0,5,InstructionRegister);
 
-		printf("HEY\n");
+		printf("IR: ");
 		for (int i = 0; i < 32; ++i)
 		{
 			printf("%hhu", InstructionRegister[i]);
 		}
 		printf("\n");
-		
+
+		printf("OPCODE: ");
+		for (int i = 0; i < 6; ++i)
+		{
+			printf("%hhu", splited[i]);
+		}
+		printf("\n");
 		
 		//Unit control 
 		unit_control(split(0,5,InstructionRegister));
