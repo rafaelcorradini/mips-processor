@@ -173,7 +173,7 @@ void memory(unsigned char adress[32], unsigned char data[32], unsigned char read
 	if(read == 1)	
 	{
 		//Copy memory data to return_array
-		int adr = convertCharToInt(adress, 32);
+		int adr = convertCharToInt(adress, 32)/4;
 		for(int i = 0; i < 32; i++)
 		{
 			if(Irwrite == 1)
@@ -187,7 +187,7 @@ void memory(unsigned char adress[32], unsigned char data[32], unsigned char read
 	else if(write == 1)
 	{
 		//Copy memory data to return_array
-		int adr = convertCharToInt(adress, 32);
+		int adr = convertCharToInt(adress, 32)/4 ;
 		for(int i = 0; i < 32; i++)
 		{
 			MEM[adr][i] = data[i];
@@ -251,7 +251,7 @@ unsigned char *mux(
     }
 }
 
-unsigned char *shiftLeft(unsigned char *input) {
+unsigned char *shiftLeft(unsigned char *input, unsigned char ISPC) {
     int i;
     unsigned char *result = malloc(sizeof(unsigned char) * 32);
     
@@ -261,6 +261,13 @@ unsigned char *shiftLeft(unsigned char *input) {
     result[31] = 0;
     result[30] = 0;
 
+    if(ISPC == 1)
+    {
+    	result[0] = PC[0]; 
+    	result[1] = PC[1];
+    	result[2] = PC[2];
+    	result[3] =	PC[3];
+    }
     return result;
 }
 
@@ -504,7 +511,10 @@ unsigned char *split(int init, int end, unsigned char *vetor)
 
 unsigned char Pc_In(unsigned char write, unsigned char cond, unsigned char *b_n_e)
 {
-	return (b_n_e&&cond)||write;
+	if((b_n_e[31] == 1 && cond == 1)|| write == 1)
+		return 1;
+	else 
+		return 0;
 }
 
 int main()
@@ -531,24 +541,50 @@ int main()
 		op[8][i] = decToBinary(8929322)[i];
 		op[9][i] = decToBinary(549912577)[i];
 		op[10][i] = decToBinary(14702629)[i];
+		op[11][i] = decToBinary(552337409)[i];
+		op[12][i] = decToBinary(25518116)[i];
+		op[13][i] = decToBinary(361496579)[i];
+		op[14][i] = decToBinary(538443876)[i];
+		op[15][i] = decToBinary(2936668160)[i];
+		op[16][i] = decToBinary(2400321536)[i];
+		op[17][i] = decToBinary(1407188992)[i];
+		op[18][i] = decToBinary(813957120)[i];
+		op[19][i] = decToBinary(537264127)[i];
+		op[20][i] = decToBinary(816185356)[i];
+		op[21][i] = decToBinary(538443777)[i];
+		op[22][i] = decToBinary(1461649408)[i];
+
 	}
 
-	for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < 32; ++i)
 	{
 		for (int j = 0; j < 32; ++j)
 		{
 			MEM[i][j] = op[i][j];
 		}
 	}
-	for (int i = 0; i < 32; ++i)
+	/*for (int i = 0; i < 32; ++i)
 	{
 		InstructionRegister[i] = MEM[0][i];
 		AuxInstructionRegister[i] = MEM[0][i];
-	}
+	}*/
 	
-
-	for (int o = 0; o < 17 ; ++o)
+	int sum;
+	for (int o = 0; ; ++o)
 	{
+		if(o > 3)
+		{
+			sum = 0;
+			for (int i = 0; i < 32; ++i)
+			{
+				sum += InstructionRegister[i];
+			}
+			if(sum == 0)
+			{
+				printf("FIM DE PROGRAMA\n");
+				break;
+			}
+		}
 		unsigned char *splited = split(0,5,InstructionRegister);
 
 
@@ -583,7 +619,7 @@ int main()
 		for (int i = 0; i < 32; ++i)
 		{
 			{
-				printf("%hhu",mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister)), A, PCSource)[i]);
+				printf("%hhu",mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister),1), A, PCSource)[i]);
 			}
 		}
 		
@@ -605,9 +641,9 @@ int main()
 		registers(split(6,10,InstructionRegister), split(11,15,InstructionRegister), mux2(split(11,15,InstructionRegister),
 				  split(16,20, InstructionRegister), decToBinary(31), NULL, RegDst), mux2(AluOut, MemoryDataRegister, PC, NULL, MemtoReg), RegWrite);
 		//Alu function
-		ALU(aluControl(ALUOp, split(26,31, InstructionRegister)), mux(PC, A, ALUSrcA), mux2(B, signalExtend(split(16, 31, InstructionRegister)), decToBinary(1), shiftLeft(signalExtend(split(16, 31, InstructionRegister))), ALUSrcB));
+		ALU(aluControl(ALUOp, split(26,31, InstructionRegister)), mux(PC, A, ALUSrcA), mux2(B, signalExtend(split(16, 31, InstructionRegister)), decToBinary(4), shiftLeft(signalExtend(split(16, 31, InstructionRegister)),0), ALUSrcB));
 		//PC function
-		PC_func(mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister)), A, PCSource), Pc_In(PCWrite, PCWriteCond, mux(Z,O,BNE)));
+		PC_func(mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister), 1), A, PCSource), Pc_In(PCWrite, PCWriteCond, mux(Z,O,BNE)));
 		//Pass aux values to registers at upper clock border
 		clockUpper();
 	}
