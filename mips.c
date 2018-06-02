@@ -93,39 +93,39 @@ void unit_control(unsigned char opcode[6]){
     int b[4];
 
     	//b3 = less significative bit
-        b[3]=(!(old)+!((old^0x2)+(op^0x23))+
-        !((old^0x2)+(op^0x2b))+
-        !(old^0x6)+!((old^0x1)+(op^0x2))+
-        !((old^0x1)+(op^0x8))+
-        !(((old^0x1)+(op^0x14))*((old^0x15)+(op^0x15)))+
-        !((old^0x1)+(op^0x15)));
+        b[3]=(!(old)|!((old^0x2)|(op^0x23))|
+        !((old^0x2)|(op^0x2b))|
+        !(old^0x6)|!((old^0x1)|(op^0x2))|
+        !((old^0x1)|(op^0x8))|
+        !(((old^0x1)|(op^0x14))&((old^0x15)|(op^0x15)))|
+        !((old^0x1)|(op^0x15)));
 
-        b[2]=!((old^0x1)+((op^0x23)*(op^0x2b))) +
-        !((old^0x2)+(op^0x23)) +
-        !((old^0x1)+!!(op)) +
-        !(old^0x6) +
-        !((old^0x1)+(op^0x5)) +
-        !((old^0x1)+(op^0x8)) +
-        !((old^0x1)+(op^0x3)) +
-        !((old^0x1)+(op^0x15));
+        b[2]=!((old^0x1)|((op^0x23)&(op^0x2b))) |
+        !((old^0x2)|(op^0x23)) |
+        !((old^0x1)|!!(op)) |
+        !(old^0x6) |
+        !((old^0x1)|(op^0x5)) |
+        !((old^0x1)|(op^0x8)) |
+        !((old^0x1)|(op^0x3)) |
+        !((old^0x1)|(op^0x15));
 
-        b[1]= !(old^0x3) +
-        !((old^0x2)+(op^0x2b)) +
-        !((old^0x1)+!!(op)) +
-        !(old^0x6) +
-        !((old^0x1)+(op^0xc)) +
-        !(((old^0x1)+(op^0x14))*((old^0x15)+(op^0x15))) +
-        !((old^0x1)+(op^0x3)) +
-        !((old^0x1)+(op^0x15));
+        b[1]= !(old^0x3) |
+        !((old^0x2)|(op^0x2b)) |
+        !((old^0x1)|!!(op)) |
+        !(old^0x6) |
+        !((old^0x1)|(op^0xc)) |
+        !(((old^0x1)|(op^0x14))&((old^0x15)|(op^0x15))) |
+        !((old^0x1)|(op^0x3)) |
+        !((old^0x1)|(op^0x15));
 
-        b[0]= !((old^0x1)+(op^0x4)) +
-        !((old^0x1)+(op^0x2)) +
-        !((old^0x1)+(op^0x5)) +
-        !((old^0x1)+(op^0x8)) +
-        !((old^0x1)+(op^0xc)) +
-        !(((old^0x1)+(op^0x14))*((old^0x15)+(op^0x15))) +
-        !((old^0x1)+(op^0x3)) +
-        !((old^0x1)+(op^0x15));
+        b[0]= !((old^0x1)|(op^0x4)) |
+        !((old^0x1)|(op^0x2)) |
+        !((old^0x1)|(op^0x5)) |
+        !((old^0x1)|(op^0x8)) |
+        !((old^0x1)|(op^0xc)) |
+        !(((old^0x1)|(op^0x14))&((old^0x15)|(op^0x15))) |
+        !((old^0x1)|(op^0x3)) |
+        !((old^0x1)|(op^0x15));
 
 
 
@@ -133,24 +133,24 @@ void unit_control(unsigned char opcode[6]){
 
 
 
-		PCWrite=!b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*!b[2]*b[3];
-        PCWriteCond=b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3];
-        IorD=!b[0]*!b[1]*b[2]*b[3]+!b[0]*b[1]*!b[2]*b[3];
-        MemRead=!b[0]*!b[1]*!b[2]*!b[3]+!b[0]*!b[1]*b[2]*b[3];
-        MemWrite=!b[0]*b[1]*!b[2]*b[3];
-        Irwrite=!b[0]*!b[1]*!b[2]*!b[3];
-        MemtoReg[0]=!b[0]*b[1]*!b[2]*!b[3];
-        PCSource[1]=b[0]*!b[1]*!b[2]*b[3];
-        PCSource[0]=b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3]+b[0]*b[1]*!b[2]*b[3];
-        ALUOp[1]=!b[0]*b[1]*b[2]*!b[3];
-        ALUOp[0]=b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3];
-        ALUSrcB[1]=!b[0]*!b[1]*b[2]*!b[3];
-        ALUSrcB[0]=!b[0]*!b[1]*!b[2]*!b[3]+!b[0]*!b[1]*!b[2]*b[3]+!b[0]*!b[1]*!b[2]*!b[3];
-        ALUSrcA=!b[0]*!b[1]*b[2]*!b[3]+!b[0]*b[1]*b[2]*!b[3]+b[0]*!b[1]*!b[2]*!b[3]+b[0]*!b[1]*b[2]*!b[3];
-        RegWrite=!b[0]*b[1]*!b[2]*!b[3]+!b[0]*b[1]*b[2]*b[3]+!b[0]*!b[1]*!b[2]*!b[3]+!b[0]*!b[1]*!b[2]*!b[3];
-        RegDst[0]=!b[0]*b[1]*b[2]*b[3];
-        RegDst[1]=b[0]*b[1]*b[2]*!b[3];
-        BNE=b[0]*!b[1]*b[2]*!b[3];
+		PCWrite=!b[0]&!b[1]&!b[2]&!b[3]|b[0]&!b[1]&!b[2]&b[3];
+        PCWriteCond=b[0]&!b[1]&!b[2]&!b[3]|b[0]&!b[1]&b[2]&!b[3];
+        IorD=!b[0]&!b[1]&b[2]&b[3]|!b[0]&b[1]&!b[2]&b[3];
+        MemRead=!b[0]&!b[1]&!b[2]&!b[3]|!b[0]&!b[1]&b[2]&b[3];
+        MemWrite=!b[0]&b[1]&!b[2]&b[3];
+        Irwrite=!b[0]&!b[1]&!b[2]&!b[3];
+        MemtoReg[0]=!b[0]&b[1]&!b[2]&!b[3];
+        PCSource[1]=b[0]&!b[1]&!b[2]&b[3];
+        PCSource[0]=b[0]&!b[1]&!b[2]&!b[3]|b[0]&!b[1]&b[2]&!b[3]|b[0]&b[1]&!b[2]&b[3];
+        ALUOp[1]=!b[0]&b[1]&b[2]&!b[3];
+        ALUOp[0]=b[0]&!b[1]&!b[2]&!b[3]|b[0]&!b[1]&b[2]&!b[3];
+        ALUSrcB[1]=!b[0]&!b[1]&b[2]&!b[3];
+        ALUSrcB[0]=!b[0]&!b[1]&!b[2]&!b[3]|!b[0]&!b[1]&!b[2]&b[3]|!b[0]&!b[1]&!b[2]&!b[3];
+        ALUSrcA=!b[0]&!b[1]&b[2]&!b[3]|!b[0]&b[1]&b[2]&!b[3]|b[0]&!b[1]&!b[2]&!b[3]|b[0]&!b[1]&b[2]&!b[3];
+        RegWrite=!b[0]&b[1]&!b[2]&!b[3]|!b[0]&b[1]&b[2]&b[3]|!b[0]&!b[1]&!b[2]&!b[3]|!b[0]&!b[1]&!b[2]&!b[3];
+        RegDst[0]=!b[0]&b[1]&b[2]&b[3];
+        RegDst[1]=b[0]&b[1]&b[2]&!b[3];
+        BNE=b[0]&!b[1]&b[2]&!b[3];
         MemtoReg[1]=0;
 
 return;
@@ -160,7 +160,7 @@ void PC_func(unsigned char mxPC [32], unsigned char PcIn){
 	int i;
 	if(PcIn == 1){
 		for(i = 0; i < 32; i++){
-			PC[i] = mxPC[i];
+			AuxPC[i] = mxPC[i];
 		}
 	}
 }
@@ -547,7 +547,7 @@ int main()
 	}
 	
 
-	for (int o = 0; o < 32 ; ++o)
+	for (int o = 0; o < 17 ; ++o)
 	{
 		unsigned char *splited = split(0,5,InstructionRegister);
 
@@ -559,12 +559,12 @@ int main()
 		}
 		printf("\n");
 
-		/*printf("OPCODE: ");
+		printf("OPCODE: ");
 		for (int i = 0; i < 6; ++i)
 		{
 			printf("%hhu", splited[i]);
 		}
-		printf("\n");*/
+		printf("\n");
 
 		printf("PC: ");
 		for (int i = 0; i < 32; ++i)
@@ -583,14 +583,18 @@ int main()
 		for (int i = 0; i < 32; ++i)
 		{
 			{
-				printf("%hhu",AuxAluOut[i]);
+				printf("%hhu",mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister)), A, PCSource)[i]);
 			}
 		}
 		
-		/*printf("PC SOURCE: ");
-			printf("%hhu%hhu\n", PCSource[0], PCSource[1]);*/
+		printf("\nALU SOURCE A: ");
+			printf("%hhu\n", ALUSrcA);
+		printf("ALU SOURCE B: ");
+			printf("%hhu%hhu\n", ALUSrcB[0], ALUSrcB[1]);	
 
+		
 		printf("\n\n");
+		//printf("%d\n", o);
 		
 		
 		//Unit control 
@@ -601,14 +605,14 @@ int main()
 		registers(split(6,10,InstructionRegister), split(11,15,InstructionRegister), mux2(split(11,15,InstructionRegister),
 				  split(16,20, InstructionRegister), decToBinary(31), NULL, RegDst), mux2(AluOut, MemoryDataRegister, PC, NULL, MemtoReg), RegWrite);
 		//Alu function
-		ALU(aluControl(ALUOp, split(26,31, InstructionRegister)), mux(A, PC, ALUSrcA), mux2(B, decToBinary(1), signalExtend(split(16, 31, InstructionRegister)), shiftLeft(signalExtend(split(16, 31, InstructionRegister))), ALUSrcB));
+		ALU(aluControl(ALUOp, split(26,31, InstructionRegister)), mux(PC, A, ALUSrcA), mux2(B, signalExtend(split(16, 31, InstructionRegister)), decToBinary(1), shiftLeft(signalExtend(split(16, 31, InstructionRegister))), ALUSrcB));
 		//PC function
 		PC_func(mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister)), A, PCSource), Pc_In(PCWrite, PCWriteCond, mux(Z,O,BNE)));
 		//Pass aux values to registers at upper clock border
 		clockUpper();
 	}
 
-	/*printf("REGISTRADORES\n");
+	printf("REGISTRADORES\n");
 	for (int i = 0; i < 32; ++i)
 	{
 		for (int j = 0; j < 32; ++j)
@@ -627,7 +631,7 @@ int main()
 		}
 		printf("\n");
 	}
-	*/
+	
 	return 0;
 }
 
