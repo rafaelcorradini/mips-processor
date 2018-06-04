@@ -1,6 +1,6 @@
 //Enzo Bustamante Junco Mendonca - 9863437:
 //Funçoes de memoria, banco de registradores, controle e condicao de atualizacao de PC, Borda de subida de clock
-//split de Array, organizaçao e montagem da ordem de funçoes e debug.
+//split de Array, organizaçao e montagem da ordem de funçoes, print final apos execao e debug.
 
 //Rafael Corradini da Cunha - 9424322:
 //Funçoes de SignalExtend, ShiftLeft, todos os multiplexadores, leitura da entrada em code.bin e debug. 
@@ -89,6 +89,8 @@ unsigned char AluZero;
 //Control unit state
 int old=0;
 int next=0;
+
+int cicle = 0;
 
 //Convert a binary array to respective integer
 int convertCharToInt(unsigned char *binaryArray, int lenght){
@@ -180,6 +182,99 @@ void PC_func(unsigned char mxPC [32], unsigned char PcIn){
 	}
 }
 
+//Final print after execution  exeption
+void finalPrint(unsigned char why)
+{   
+    //Prints why execution is terminated 
+    printf("Status da Saida: ");
+    switch(why) {
+        case 0:
+             printf("Termino devido a tentativa de execucao de instrucao invalida.\n"); 
+        break;
+        case 1:
+            printf("Termino devido a acesso invalido de memoria.\n"); 
+        break;
+        case 2:
+            printf("Termino devido a operacao invalida da ULA.\n"); 
+        break;
+        case 3:
+            printf("Termino devido a acesso invalido ao Banco de Registradores\n"); 
+        break;
+    }
+    //Prints PC
+    printf("\nPC: ");
+    for (int j = 0; j < 32; ++j)
+    {
+         printf("%hhu", PC[j]);
+    }
+
+    //Prints IR
+    printf("\nIR: ");
+    for (int j = 0; j < 32; ++j)
+    {
+         printf("%hhu", InstructionRegister[j]);
+    }
+
+    //Prints MDR
+    printf("\nMDR: ");
+    for (int j = 0; j < 32; ++j)
+    {
+         printf("%hhu", MemoryDataRegister[j]);
+    }
+
+    //Prints A
+    printf("\nA: ");
+    for (int j = 0; j < 32; ++j)
+    {
+         printf("%hhu", A[j]);
+    }
+
+    //Prints B
+    printf("\nB: ");
+    for (int j = 0; j < 32; ++j)
+    {
+         printf("%hhu", B[j]);
+    }
+
+    //Prints AluOut
+    printf("\nAluOut: ");
+    for (int j = 0; j < 32; ++j)
+    {
+         printf("%hhu", MemoryDataRegister[j]);
+    }
+
+    printf("\nREGISTRADORES\n");
+    for (int i = 0; i < 32; ++i)
+    {   
+        if(i<10)
+            printf("%d:   ", i);
+        else
+            printf("%d:  ", i);
+        for (int j = 0; j < 32; ++j)
+        {
+            printf("%hhu",REG[i][j]);
+        }
+        printf("\n");
+    }
+
+    printf("MEMORIA:\n");
+    for (int i = 0; i < 64; ++i)
+    {
+        if(i*4<10)
+            printf("%d:   ", i*4);
+        else if(i*4 < 100)
+            printf("%d:  ", i*4);
+        else
+            printf("%d: ", i*4);
+        for (int j = 0; j < 32; ++j)
+        {
+            printf("%hhu", MEM[i][j]);
+        }
+        printf("\n");
+    }
+    exit (EXIT_SUCCESS);
+}
+
 //64 Word Memory block function
 void memory(unsigned char adress[32], unsigned char data[32], unsigned char read, unsigned char write)
 {
@@ -188,12 +283,21 @@ void memory(unsigned char adress[32], unsigned char data[32], unsigned char read
 	{
 		//Copy memory data to return_array
 		int adr = convertCharToInt(adress, 32)/4;
+        //In case of invalid memory access
+        if(adr > 63)
+            finalPrint(1);
+        //Copy what is being read
 		for(int i = 0; i < 32; i++)
 		{
+            //To Instruction Register
 			if(Irwrite == 1)
 			{
 				AuxInstructionRegister[i] = MEM[adr][i];
+                //In case of invalid instruction
+                if(cicle > 3 && convertCharToInt(AuxInstructionRegister, 32) == 0)
+                    finalPrint(0);
 			}
+            //To Memory Data Register
 			AuxMemoryDataRegister[i] =  MEM[adr][i];
 		}
 	}
@@ -202,6 +306,8 @@ void memory(unsigned char adress[32], unsigned char data[32], unsigned char read
 	{
 		//Copy memory data to return_array
 		int adr = convertCharToInt(adress, 32)/4 ;
+        if(adr > 63)
+            finalPrint(1);
 		for(int i = 0; i < 32; i++)
 		{
 			MEM[adr][i] = data[i];
@@ -216,6 +322,8 @@ void registers(unsigned char ReadRegister1[5], unsigned char ReadRegister2[5], u
 	if(RegWrite == 1)
 	{   
 		int reg_num = convertCharToInt(WriteRegister, 5);
+        if(reg_num > 31)
+            finalPrint(3);
 		for (int i = 0; i < 32; ++i)
 		{
 			AuxREG[reg_num][i] = WriteData[i];
@@ -224,6 +332,8 @@ void registers(unsigned char ReadRegister1[5], unsigned char ReadRegister2[5], u
 	//To read both ReadRegister 1 and ReadRegister 2 number registers and copy the contents to registers A and B respectively   
 	int reg_num1 = convertCharToInt(ReadRegister1, 5);
 	int reg_num2 = convertCharToInt(ReadRegister2, 5);
+    if(reg_num1 > 31 || reg_num2 > 31)
+        finalPrint(3);
 	for (int i = 0; i < 32; ++i)
 	{
 		A[i] = REG[reg_num1][i];
@@ -559,21 +669,23 @@ unsigned char Pc_In(unsigned char write, unsigned char cond, unsigned char b_n_e
 		return 0;
 }
 
-int main()
+
+//Initial memory fill from input
+void fillMemory()
 {
     //Variables to recive the input from argument
-	unsigned char **op;
+    unsigned char **op;
     int input;
 
     //Aux Matrix Alocation
-	op = (unsigned char **)malloc(sizeof(unsigned char*) * 64);
-	for (int i = 0; i < 32; ++i)
-	{
-		op[i] = (unsigned char *)malloc(sizeof(unsigned char) * 32);
-	}
+    op = (unsigned char **)malloc(sizeof(unsigned char*) * 64);
+    for (int i = 0; i < 32; ++i)
+    {
+        op[i] = (unsigned char *)malloc(sizeof(unsigned char) * 32);
+    }
 
     //Recives all instructions and put in aux
-	int x = 0;
+    int x = 0;
     do {
         scanf("%d", &input);
         for (int y = 0; y < 32; ++y) {   
@@ -584,62 +696,39 @@ int main()
     } while(input != EOF && input != '\n');
 
     //Copy aux to fill the memory
-	for (int i = 0; i < 32; ++i)
-	{
-		for (int j = 0; j < 32; ++j)
-		{
-			MEM[i][j] = op[i][j];
-		}
-	}
-	
-	int sum;
+    for (int i = 0; i < 32; ++i)
+    {
+        for (int j = 0; j < 32; ++j)
+        {
+            MEM[i][j] = op[i][j];
+        }
+    }
+}
+
+int main()
+{
+    fillMemory();
+
+    //Simulates one mips cicle at each iteration
 	for (int o = 0; ; ++o)
 	{
-        //Break execution at invalid operation
-		if(o > 3)
-		{
-			sum = 0;
-			for (int i = 0; i < 32; ++i)
-			{
-				sum += InstructionRegister[i];
-			}
-			if(sum == 0)
-			{
-				printf("FIM DE PROGRAMA\n");
-				break;
-			}
-		}
 		unsigned char *splited = split(0,5,InstructionRegister);
-
-
 		printf("IR: ");
-		for (int i = 0; i < 32; ++i)
-		{
-			printf("%hhu", InstructionRegister[i]);
-		}
-		printf("\n");
-
+		for (int i = 0; i < 32; ++i){
+		printf("%hhu", InstructionRegister[i]);}
+        printf("\n");
 		printf("OPCODE: ");
-		for (int i = 0; i < 6; ++i)
-		{
-			printf("%hhu", splited[i]);
-		}
+		for (int i = 0; i < 6; ++i){
+		printf("%hhu", splited[i]);}
 		printf("\n");
-
 		printf("PC: ");
-		for (int i = 0; i < 32; ++i)
-		{
-			printf("%hhu", PC[i]);
-		}
+		for (int i = 0; i < 32; ++i){
+		printf("%hhu", PC[i]);}
 		printf("\n");
-
 		printf("PC WRITE: ");
-			printf("%hhu\n", PCWrite);
-
-		printf("PC SOURCE: ");
-			printf("%hhu%hhu\n", PCSource[0], PCSource[1]);	
-
-
+		printf("%hhu\n", PCWrite);
+        printf("PC SOURCE: ");
+		printf("%hhu%hhu\n", PCSource[0], PCSource[1]);	
 		printf("PCWriteCond %hhu\n", PCWriteCond);
 		printf("IorD %hhu\n", IorD);
 		printf("MemRead %hhu\n", MemRead);
@@ -650,22 +739,10 @@ int main()
 		printf("BNE %hhu\n", BNE);
 		printf("ALUOp %hhu%hhu\n", ALUOp[0], ALUOp[1]);
 		printf("RegDst %hhu%hhu\n", RegDst[0], RegDst[1]);
-
-	
-		/*printf("PC MUST WRITE: ");
-		for (int i = 0; i < 32; ++i)
-		{
-			{
-				printf("%hhu",mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister),1), A, PCSource)[i]);
-			}
-		}*/
-		
-		printf("\nALU SOURCE A: ");
-			printf("%hhu\n", ALUSrcA);
+        printf("\nALU SOURCE A: ");
+		printf("%hhu\n", ALUSrcA);
 		printf("ALU SOURCE B: ");
-			printf("%hhu%hhu\n", ALUSrcB[0], ALUSrcB[1]);	
-
-		
+		printf("%hhu%hhu\n", ALUSrcB[0], ALUSrcB[1]);	
 		printf("\n\n");
 		
 		//Unit control 
@@ -681,36 +758,7 @@ int main()
 		PC_func(mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister), 1), A, PCSource), Pc_In(PCWrite, PCWriteCond, muxBranch(AluZero,!AluZero,BNE)));
 		//Pass aux values to registers at upper clock border
 		clockUpper();
-	}
-
-	printf("REGISTRADORES\n");
-	for (int i = 0; i < 32; ++i)
-	{   
-        if(i<10)
-            printf("%d:   ", i);
-        else
-            printf("%d:  ", i);
-		for (int j = 0; j < 32; ++j)
-		{
-			printf("%hhu",REG[i][j]);
-		}
-		printf("\n");
-	}
-
-	printf("MEMORIA:\n");
-	for (int i = 0; i < 64; ++i)
-	{
-        if(i*4<10)
-            printf("%d:   ", i*4);
-        else if(i*4 < 100)
-            printf("%d:  ", i*4);
-        else
-            printf("%d: ", i*4);
-		for (int j = 0; j < 32; ++j)
-		{
-			printf("%hhu", MEM[i][j]);
-		}
-		printf("\n");
+        cicle++;
 	}
 	
 	return 0;
