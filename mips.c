@@ -1,3 +1,18 @@
+//Enzo Bustamante Junco Mendonca - 9863437:
+//Funçoes de memoria, banco de registradores, controle e condicao de atualizacao de PC, Borda de subida de clock
+//split de Array, organizaçao e montagem da ordem de funçoes e debug.
+
+//Rafael Corradini da Cunha - 9424322:
+//Funçoes de SignalExtend, ShiftLeft, todos os multiplexadores, leitura da entrada em code.bin e debug. 
+
+//Joao Pedro Hannauer - 9390486:
+//Funcoes de Alu, Alu Control, checagem da operacao e do campo de funcao, conversao de bin/dec e dec/bin, 
+//organizaçao e montagem da ordem de funçoes e debug.
+
+//Luca Machado Bottino - 6760300:
+//Unidade de controle.
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,14 +84,13 @@ unsigned char AuxREG[32][32];
 unsigned char AuxAluOut[32];
 
 //ZERO AND ONE
-unsigned char Z[1] = {0};
-unsigned char O[1] = {1};
-
+unsigned char AluZero;
 
 //Control unit state
 int old=0;
 int next=0;
 
+//Convert a binary array to respective integer
 int convertCharToInt(unsigned char *binaryArray, int lenght){
     int result = 0;
 
@@ -87,9 +101,11 @@ int convertCharToInt(unsigned char *binaryArray, int lenght){
     return result;
 }
 
+//Control unit implemented as logic equation to simulates the PLA
 void unit_control(unsigned char opcode[6]){
 
-   int op = convertCharToInt(opcode, 6);
+
+    int op = convertCharToInt(opcode, 6);
     int b[4];
 
     	//b3 = less significative bit
@@ -131,8 +147,6 @@ void unit_control(unsigned char opcode[6]){
 
         old=8*b[0]+4*b[1]+2*b[2]+1*b[3];
 
-
-
 		PCWrite=!b[0]&!b[1]&!b[2]&!b[3]|b[0]&!b[1]&!b[2]&b[3];
         PCWriteCond=b[0]&!b[1]&!b[2]&!b[3]|b[0]&!b[1]&b[2]&!b[3];
         IorD=!b[0]&!b[1]&b[2]&b[3]|!b[0]&b[1]&!b[2]&b[3];
@@ -156,6 +170,7 @@ void unit_control(unsigned char opcode[6]){
 return;
 }
 
+//Controls by PcIn when PC can be changed
 void PC_func(unsigned char mxPC [32], unsigned char PcIn){
 	int i;
 	if(PcIn == 1){
@@ -165,8 +180,7 @@ void PC_func(unsigned char mxPC [32], unsigned char PcIn){
 	}
 }
 
-
-
+//64 Word Memory block function
 void memory(unsigned char adress[32], unsigned char data[32], unsigned char read, unsigned char write)
 {
 	//For a read operation
@@ -195,6 +209,7 @@ void memory(unsigned char adress[32], unsigned char data[32], unsigned char read
 	}
 }
 
+//32 Registers of 32bit as register bank
 void registers(unsigned char ReadRegister1[5], unsigned char ReadRegister2[5], unsigned char WriteRegister[5], unsigned char WriteData[32], unsigned char RegWrite)	
 {
 	//To write WriteData content at register of number WriteRegister
@@ -206,8 +221,7 @@ void registers(unsigned char ReadRegister1[5], unsigned char ReadRegister2[5], u
 			AuxREG[reg_num][i] = WriteData[i];
 		}
 	}
-	//To read both ReadRegister 1 and ReadRegister 2 number registers and copy the contents to registers A and B respectively
-      
+	//To read both ReadRegister 1 and ReadRegister 2 number registers and copy the contents to registers A and B respectively   
 	int reg_num1 = convertCharToInt(ReadRegister1, 5);
 	int reg_num2 = convertCharToInt(ReadRegister2, 5);
 	for (int i = 0; i < 32; ++i)
@@ -217,6 +231,7 @@ void registers(unsigned char ReadRegister1[5], unsigned char ReadRegister2[5], u
 	}
 }
 
+//MUX For 2Bit Control
 unsigned char *mux2(
     unsigned char *input0,
     unsigned char *input1,
@@ -237,6 +252,7 @@ unsigned char *mux2(
     }
 }
 
+//Mux for 1Bit Control
 unsigned char *mux(
     unsigned char *input0,
     unsigned char *input1,
@@ -251,6 +267,22 @@ unsigned char *mux(
     }
 }
 
+//Mux for the Branch's type instructions
+unsigned char muxBranch(
+    unsigned char input0,
+    unsigned char input1,
+    unsigned char control
+) {
+    if(control == 0) {
+        return input0;
+        
+    } 
+    else {
+        return input1;
+    }
+}
+
+//ShiftLeft from IR or IR+PC
 unsigned char *shiftLeft(unsigned char *input, unsigned char ISPC) {
     int i;
     unsigned char *result = malloc(sizeof(unsigned char) * 32);
@@ -271,6 +303,7 @@ unsigned char *shiftLeft(unsigned char *input, unsigned char ISPC) {
     return result;
 }
 
+//Signal extends 16 msb from input
 unsigned char *signalExtend(unsigned char *input) {
     unsigned char *result = malloc(sizeof(unsigned char) * 32);
     
@@ -283,6 +316,7 @@ unsigned char *signalExtend(unsigned char *input) {
 
     return result;
 }
+
 
 int checkFunctionField(unsigned char *instructionFunction){
     if(instructionFunction[0] == 1 && instructionFunction[1] == 0 && instructionFunction[2] == 0 
@@ -439,6 +473,11 @@ void ALU(unsigned char *aluControlInput, unsigned char *dataOne, unsigned char *
     }
     else if (checkALUoperation(aluControlInput) == 1){
         result = decToBinary(operandOne - operandTwo);
+        if(operandOne == operandTwo)
+            AluZero = 0;
+        else
+            AluZero = 1;
+
     }
     else if (checkALUoperation(aluControlInput) == 2){
         result = decToBinary(operandOne & operandTwo);
@@ -453,6 +492,7 @@ void ALU(unsigned char *aluControlInput, unsigned char *dataOne, unsigned char *
         else{
             result = decToBinary(0);
         }
+
     }
     for (int i = 0; i < 32; ++i)
     {
@@ -461,6 +501,7 @@ void ALU(unsigned char *aluControlInput, unsigned char *dataOne, unsigned char *
     free(result);
 }
 
+//Simulates the upper Clock border, and atualizes all "latches"
 void clockUpper()
 {
 	for (int i = 0; i < 32; ++i)
@@ -497,21 +538,22 @@ void clockUpper()
 	}	
 }
 
-unsigned char *split(int init, int end, unsigned char *vetor)
+//Split an vector and returns it from init to end
+unsigned char *split(int init, int end, unsigned char *vector)
 {
 	unsigned char *array;
 	array = malloc(sizeof(unsigned char) * (end - init + 1));
 	for (int i = init, j = 0; i <= end; ++i, ++j)
 	{
-		array[j] = vetor[i];
+		array[j] = vector[i];
 	}
 	return array;
 }
 
-
-unsigned char Pc_In(unsigned char write, unsigned char cond, unsigned char *b_n_e)
+//Verifies PcFunction Write condition
+unsigned char Pc_In(unsigned char write, unsigned char cond, unsigned char b_n_e)
 {
-	if((b_n_e[31] == 1 && cond == 1)|| write == 1)
+	if((b_n_e == 1 && cond == 1)|| write == 1)
 		return 1;
 	else 
 		return 0;
@@ -519,43 +561,29 @@ unsigned char Pc_In(unsigned char write, unsigned char cond, unsigned char *b_n_
 
 int main()
 {
-
+    //Variables to recive the input from argument
 	unsigned char **op;
+    int input;
 
+    //Aux Matrix Alocation
 	op = (unsigned char **)malloc(sizeof(unsigned char*) * 64);
 	for (int i = 0; i < 32; ++i)
 	{
 		op[i] = (unsigned char *)malloc(sizeof(unsigned char) * 32);
 	}
 
-	for (int i = 0; i < 32; ++i)
-	{
-		op[0][i] = decToBinary(201326610)[i];
-		op[1][i] = decToBinary(537395210)[i];
-		op[2][i] = decToBinary(537460737)[i];
-		op[3][i] = decToBinary(537526274)[i];
-		op[4][i] = decToBinary(277348355)[i];
-		op[5][i] = decToBinary(8986656)[i];
-		op[6][i] = decToBinary(13185058)[i];
-		op[7][i] = decToBinary(134217732)[i];
-		op[8][i] = decToBinary(8929322)[i];
-		op[9][i] = decToBinary(549912577)[i];
-		op[10][i] = decToBinary(14702629)[i];
-		op[11][i] = decToBinary(552337409)[i];
-		op[12][i] = decToBinary(25518116)[i];
-		op[13][i] = decToBinary(361496579)[i];
-		op[14][i] = decToBinary(538443876)[i];
-		op[15][i] = decToBinary(2936668160)[i];
-		op[16][i] = decToBinary(2400321536)[i];
-		op[17][i] = decToBinary(1407188992)[i];
-		op[18][i] = decToBinary(813957120)[i];
-		op[19][i] = decToBinary(537264127)[i];
-		op[20][i] = decToBinary(816185356)[i];
-		op[21][i] = decToBinary(538443777)[i];
-		op[22][i] = decToBinary(1461649408)[i];
+    //Recives all instructions and put in aux
+	int x = 0;
+    do {
+        scanf("%d", &input);
+        for (int y = 0; y < 32; ++y) {   
+            op[x][y] = decToBinary(input)[y];
+        }
+        x++;
+        
+    } while(input != EOF && input != '\n');
 
-	}
-
+    //Copy aux to fill the memory
 	for (int i = 0; i < 32; ++i)
 	{
 		for (int j = 0; j < 32; ++j)
@@ -563,15 +591,11 @@ int main()
 			MEM[i][j] = op[i][j];
 		}
 	}
-	/*for (int i = 0; i < 32; ++i)
-	{
-		InstructionRegister[i] = MEM[0][i];
-		AuxInstructionRegister[i] = MEM[0][i];
-	}*/
 	
 	int sum;
 	for (int o = 0; ; ++o)
 	{
+        //Break execution at invalid operation
 		if(o > 3)
 		{
 			sum = 0;
@@ -615,13 +639,26 @@ int main()
 		printf("PC SOURCE: ");
 			printf("%hhu%hhu\n", PCSource[0], PCSource[1]);	
 
-		printf("PC MUST WRITE: ");
+
+		printf("PCWriteCond %hhu\n", PCWriteCond);
+		printf("IorD %hhu\n", IorD);
+		printf("MemRead %hhu\n", MemRead);
+		printf("MemWrite %hhu\n", MemWrite);
+		printf("Irwrite %hhu\n", Irwrite);
+		printf("MemtoReg %hhu%hhu\n", MemtoReg[0], MemtoReg[1]);
+		printf("RegWrite %hhu\n", RegWrite);
+		printf("BNE %hhu\n", BNE);
+		printf("ALUOp %hhu%hhu\n", ALUOp[0], ALUOp[1]);
+		printf("RegDst %hhu%hhu\n", RegDst[0], RegDst[1]);
+
+	
+		/*printf("PC MUST WRITE: ");
 		for (int i = 0; i < 32; ++i)
 		{
 			{
 				printf("%hhu",mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister),1), A, PCSource)[i]);
 			}
-		}
+		}*/
 		
 		printf("\nALU SOURCE A: ");
 			printf("%hhu\n", ALUSrcA);
@@ -630,8 +667,6 @@ int main()
 
 		
 		printf("\n\n");
-		//printf("%d\n", o);
-		
 		
 		//Unit control 
 		unit_control(split(0,5,InstructionRegister));
@@ -643,14 +678,18 @@ int main()
 		//Alu function
 		ALU(aluControl(ALUOp, split(26,31, InstructionRegister)), mux(PC, A, ALUSrcA), mux2(B, signalExtend(split(16, 31, InstructionRegister)), decToBinary(4), shiftLeft(signalExtend(split(16, 31, InstructionRegister)),0), ALUSrcB));
 		//PC function
-		PC_func(mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister), 1), A, PCSource), Pc_In(PCWrite, PCWriteCond, mux(Z,O,BNE)));
+		PC_func(mux2(AuxAluOut, AluOut, shiftLeft(split(6,31,InstructionRegister), 1), A, PCSource), Pc_In(PCWrite, PCWriteCond, muxBranch(AluZero,!AluZero,BNE)));
 		//Pass aux values to registers at upper clock border
 		clockUpper();
 	}
 
 	printf("REGISTRADORES\n");
 	for (int i = 0; i < 32; ++i)
-	{
+	{   
+        if(i<10)
+            printf("%d:   ", i);
+        else
+            printf("%d:  ", i);
 		for (int j = 0; j < 32; ++j)
 		{
 			printf("%hhu",REG[i][j]);
@@ -661,6 +700,12 @@ int main()
 	printf("MEMORIA:\n");
 	for (int i = 0; i < 64; ++i)
 	{
+        if(i*4<10)
+            printf("%d:   ", i*4);
+        else if(i*4 < 100)
+            printf("%d:  ", i*4);
+        else
+            printf("%d: ", i*4);
 		for (int j = 0; j < 32; ++j)
 		{
 			printf("%hhu", MEM[i][j]);
